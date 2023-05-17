@@ -6,9 +6,9 @@ cabal-version: 1.12
 
 name:           utils
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/utils#readme>
-homepage:       https://github.com/bogo8liuk/lib-utils#readme
-bug-reports:    https://github.com/bogo8liuk/lib-utils/issues
+description:    Please see the README on GitHub at <https://github.com/bogo8liuk/hs-utils#readme>
+homepage:       https://github.com/bogo8liuk/hs-utils#readme
+bug-reports:    https://github.com/bogo8liuk/hs-utils/issues
 author:         Luca Borghi
 maintainer:     Luca Borghi
 copyright:      2023 Luca Borghi
@@ -21,7 +21,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/bogo8liuk/lib-utils
+  location: https://github.com/bogo8liuk/hs-utils
 
 library
   exposed-modules:
@@ -50,6 +50,6 @@ test-suite utils-test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , hs-utils
     , mtl
-    , utils
   default-language: Haskell2010
