@@ -1,7 +1,8 @@
 {- In this module, there are definitions of functions with the aim of making the code just more fancy and idiomatic. -}
 
 module Utils.Fancy
-    ( (|>)
+    ( Reason
+    , (|>)
     , (<|)
     , if'
     , then'
@@ -12,6 +13,9 @@ module Utils.Fancy
 ) where
 
 import Data.Maybe(fromMaybe)
+
+{- A `Reason` is just a brief explanation of something. -}
+type Reason = String
 
 {- This the same of ($) operator, but it is left-associative instead of being right-associative like ($).
 Let's make an example to understand its usefullness, we have:
