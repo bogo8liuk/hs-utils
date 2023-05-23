@@ -1,5 +1,6 @@
 module Utils.Monad
     ( doNothing
+    , pairA
     , notM
     , ixMapM
     , concatMapM
@@ -12,11 +13,15 @@ module Utils.Monad
     , (>>*)
 ) where
 
+import Control.Applicative
 import Control.Monad.State.Lazy
 
 {- Operation that does literally nothing. -}
 doNothing :: Applicative m => m ()
 doNothing = pure ()
+
+pairA :: Applicative m => m a -> m b -> m (a, b)
+pairA = liftA2 (,)
 
 notM :: Applicative m => m Bool -> m Bool
 notM cond = not <$> cond
