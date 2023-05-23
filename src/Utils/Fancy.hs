@@ -3,6 +3,7 @@
 module Utils.Fancy
     ( Reason
     , Usage
+    , Description
     , (|>)
     , (<|)
     , if'
@@ -15,11 +16,19 @@ module Utils.Fancy
 
 import Data.Maybe(fromMaybe)
 
+------------ String aliases ------------
+--TODO: these can be newtypes
+
 {- A `Reason` is just a brief explanation of something. -}
 type Reason = String
 
 {- A `Usage` is just an explanation of what something has to be used. -}
 type Usage = String
+
+{- A `Description` is literally a description. -}
+type Description = String
+
+----------------------------------------
 
 {- This the same of ($) operator, but it is left-associative instead of being right-associative like ($).
 Let's make an example to understand its usefullness, we have:
