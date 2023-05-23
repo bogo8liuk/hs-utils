@@ -11,10 +11,12 @@ module Utils.Monad
     , fromLastToFstM
     , local'
     , (>>*)
+    , tryFromFst
 ) where
 
 import Control.Applicative
 import Control.Monad.State.Lazy
+import Control.Monad.Error.Class
 
 {- Operation that does literally nothing. -}
 doNothing :: Applicative m => m ()
@@ -103,3 +105,8 @@ The syntax of >>* is also intuitive, because it executes >>= an arbitrary number
 by * in >>*) -}
 (>>*) :: Monad m => a -> [a -> m a] -> m a
 (>>*) = foldM (\y fM -> fM y)
+
+tryFromFst :: (MonadPlus m, MonadError err m) => [m a] -> m a
+tryFromFst [] = mzero
+tryFromFst (op : ops) =
+    op `catchError` \_ -> tryFromFst ops
