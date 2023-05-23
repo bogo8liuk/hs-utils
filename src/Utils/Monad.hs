@@ -12,8 +12,10 @@ module Utils.Monad
     , local'
     , (>>*)
     , tryFromFst
+    , tryFromFst'
 ) where
 
+import Data.List.NonEmpty(NonEmpty(..))
 import Control.Applicative
 import Control.Monad.State.Lazy
 import Control.Monad.Error.Class
@@ -106,7 +108,16 @@ by * in >>*) -}
 (>>*) :: Monad m => a -> [a -> m a] -> m a
 (>>*) = foldM (\y fM -> fM y)
 
+{- It tries a list of actions, starting from the head, until one is successful; the remaining ones are not performed.
+NB: it doesn't cancel the effects occurred when performing failing actions. -}
 tryFromFst :: (MonadPlus m, MonadError err m) => [m a] -> m a
 tryFromFst [] = mzero
 tryFromFst (op : ops) =
     op `catchError` \_ -> tryFromFst ops
+
+{- Same of `tryFromFst`, but it doesn't require the actions to be a `MonadPlus` instance.
+NB: it doesn't cancel the effects occurred when performing failing actions. -}
+tryFromFst' :: MonadError err m => NonEmpty (m a) -> m a
+tryFromFst' (op :| []) = op
+tryFromFst' (op :| (op' : ops)) =
+    op `catchError` \_ -> tryFromFst' (op' :| ops)
