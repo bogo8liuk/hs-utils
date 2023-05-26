@@ -4,6 +4,7 @@ module Utils.Fancy
     ( Reason
     , Usage
     , Description
+    , ProgName
     , (|>)
     , (<|)
     , if'
@@ -27,6 +28,9 @@ type Usage = String
 
 {- A `Description` is literally a description. -}
 type Description = String
+
+{- A `ProgName` is the name of a program. -}
+type ProgName = String
 
 ----------------------------------------
 
