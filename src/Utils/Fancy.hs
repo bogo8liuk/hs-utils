@@ -16,21 +16,25 @@ module Utils.Fancy
 ) where
 
 import Data.Maybe(fromMaybe)
+import Utils.TypeState
 
 ------------ String aliases ------------
---TODO: these can be newtypes
 
 {- A `Reason` is just a brief explanation of something. -}
-type Reason = String
+data Reason_
+type Reason = Reason_ `Typing` String
 
 {- A `Usage` is just an explanation of what something has to be used. -}
-type Usage = String
+data Usage_
+type Usage = Usage_ `Typing` String
 
 {- A `Description` is literally a description. -}
-type Description = String
+data Description_
+type Description = Description_ `Typing` String
 
 {- A `ProgName` is the name of a program. -}
-type ProgName = String
+data ProgName_
+type ProgName = ProgName_ `Typing` String
 
 ----------------------------------------
 
