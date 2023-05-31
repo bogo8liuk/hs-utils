@@ -30,6 +30,7 @@ library
       Utils.Data.Knowledge
       Utils.Fancy
       Utils.Monad
+      Utils.TypeState
   other-modules:
       Paths_hs_utils
   hs-source-dirs:
