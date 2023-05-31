@@ -16,7 +16,7 @@ module Utils.Fancy
 ) where
 
 import Data.Maybe(fromMaybe)
-import Utils.TypeState
+import Utils.TypeAlias
 
 ------------ String aliases ------------
 

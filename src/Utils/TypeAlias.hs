@@ -1,4 +1,4 @@
-{- Typestate pattern in Haskell. Useful to define "typed alias", namely a type `a` that is identical to a type `t`,
+{- Utilities to define "typed aliases", namely a type `a` that is identical to a type `t`,
 but they are actually different at the eyes of the compiler. For example, the function `writeFile` has the following
 type:
 
@@ -17,7 +17,7 @@ This is very dangerous! But we can use the `Typing` type and make a definition o
 Now, if we try to flip the arguments of `writeFile`, the compiler will raise an error.
 -}
 
-module Utils.TypeState
+module Utils.TypeAlias
     ( Typing(..)
 ) where
 
