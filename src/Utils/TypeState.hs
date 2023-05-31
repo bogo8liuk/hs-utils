@@ -11,8 +11,8 @@ where `FilePath` is defined as:
 `FilePath` is an alias to `String`, so we can accidentally flip the arguments and for the compiler everything will be ok!
 This is very dangerous! But we can use the `Typing` type and make a definition of `FilePath` like the following:
 
-  data _FilePath
-  type FilePath = _FilePath `Typing` String
+  data FilePath_
+  type FilePath = FilePath_ `Typing` String
 
 Now, if we try to flip the arguments of `writeFile`, the compiler will raise an error.
 -}
