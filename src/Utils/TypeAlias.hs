@@ -17,6 +17,9 @@ This is very dangerous! But we can use the `Typing` type and make a definition o
 Now, if we try to flip the arguments of `writeFile`, the compiler will raise an error.
 -}
 
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE StandaloneDeriving #-}
+
 module Utils.TypeAlias
     ( Typing(..)
 ) where

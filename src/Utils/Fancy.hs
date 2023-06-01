@@ -1,5 +1,7 @@
 {- In this module, there are definitions of functions with the aim of making the code just more fancy and idiomatic. -}
 
+{-# LANGUAGE TypeOperators #-}
+
 module Utils.Fancy
     ( Reason
     , Usage
