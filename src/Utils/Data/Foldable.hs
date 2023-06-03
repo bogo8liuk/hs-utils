@@ -2,8 +2,9 @@ module Utils.Data.Foldable
     ( insertAt
     , replaceAt
     , replaceAndGetAt
-    , diffList
-    , diffListTail
+    , diff
+    , diffDrop
+    , diffDropTail
     , getIfAll
     , allEq
     , occursAtLeastNTimes
@@ -80,13 +81,16 @@ replaceAndGetAt n x l =
         (l1, []) -> (Nothing, l1)
         (l1, h : t) -> (Just h, l1 ++ x : t)
 
+diff :: Eq a => [a] -> [a] -> [a]
+diff l1 l2 = filter (`elem` l2) l1
+
 {- From the second list, it removes (from the head) the number of elements of the first list. -}
-diffList :: [a] -> [b] -> [b]
-diffList l = drop $ length l
+diffDrop :: [a] -> [b] -> [b]
+diffDrop l = drop $ length l
 
 {- Same as diffList but it removes starting from the tail. -}
-diffListTail :: [a] -> [b] -> [b]
-diffListTail l = reverse . drop (length l) . reverse
+diffDropTail :: [a] -> [b] -> [b]
+diffDropTail l = reverse . drop (length l) . reverse
 
 {- Given a Foldable of Maybe, it returns a Maybe of Foldable of elements which were contained in the previous
 Foldable: Nothing if at least one was Nothing, Just a Foldable otherwise (namely all elements were Just something). -}
