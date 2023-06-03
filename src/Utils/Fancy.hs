@@ -1,13 +1,7 @@
 {- In this module, there are definitions of functions with the aim of making the code just more fancy and idiomatic. -}
 
-{-# LANGUAGE TypeOperators #-}
-
 module Utils.Fancy
-    ( Reason
-    , Usage
-    , Description
-    , ProgName
-    , (|>)
+    ( (|>)
     , (<|)
     , if'
     , then'
@@ -18,29 +12,8 @@ module Utils.Fancy
 ) where
 
 import Data.Maybe(fromMaybe)
-import Utils.TypeAlias
 
------------- String aliases ------------
-
-{- A `Reason` is just a brief explanation of something. -}
-data Reason_
-type Reason = Reason_ `Typing` String
-
-{- A `Usage` is just an explanation of what something has to be used. -}
-data Usage_
-type Usage = Usage_ `Typing` String
-
-{- A `Description` is literally a description. -}
-data Description_
-type Description = Description_ `Typing` String
-
-{- A `ProgName` is the name of a program. -}
-data ProgName_
-type ProgName = ProgName_ `Typing` String
-
-----------------------------------------
-
-{- This the same of ($) operator, but it is left-associative instead of being right-associative like ($).
+{- This is the same of ($) operator, but it is left-associative instead of being right-associative like ($).
 Let's make an example to understand its usefullness, we have:
     f x y z = x + y + z
     ...
