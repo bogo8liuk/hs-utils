@@ -1,7 +1,21 @@
+{- |
+Module : Utils.Fancy
+Description : Counter data type
+Copyright : (c) Luca Borghi, 2023
+License : GPL-3
+Stability : experimental
+
+Interface for various type of counters.
+-}
+
 module Utils.Data.Counter
-    ( Counter(..)
+    (
+    -- * Counter class
+    Counter(..)
+    -- * counter data types
     , CounterObj
     , AlphabeticCounterObj
+    -- * utilities for counters
     , newNumeric
     , newAlphabeticNumber
     , nextNumeric
@@ -15,13 +29,17 @@ class Counter c where
     cur :: c -> String
     next :: c -> (String, c)
 
-{- Just a numeric infinite counter of natural numbers:
-    0 -> 1 -> 2 -> 3 -> 4 -> ...
+{- |
+Just a numeric infinite counter of natural numbers:
+
+> 0 -> 1 -> 2 -> 3 -> 4 -> ...
 -}
 newtype CounterObj = CounterObj Integer
 
-{- The counter should work like this:
-     a -> b -> ... -> y -> z -> a1 -> b1 -> ... -> y1 -> z1 -> a2 -> ...
+{- |
+The counter should work like this:
+
+> a -> b -> ... -> y -> z -> a1 -> b1 -> ... -> y1 -> z1 -> a2 -> ...
 -}
 data AlphabeticCounterObj =
     ABCounterObj
@@ -31,9 +49,13 @@ data AlphabeticCounterObj =
         }
 
 data CountRes a =
-    {- Just a value. -}
+    {- |
+    Just a value.
+    -}
       The a
-    {- A value plus the information of "plus one". -}
+    {- |
+    A value plus the information of \"plus one\".
+    -}
     | Carry a
 
 beforeLowerA :: Char
@@ -50,8 +72,10 @@ newAlphabeticNumber =
 newNumeric :: CounterObj
 newNumeric = CounterObj 0
 
-{- It calculates the next char of a given one.
-NB: it does not check the character is in the range 'a'-'z'. -}
+{- |
+It calculates the next char of a given one.
+NB: it does not check the character is in the range 'a'-'z'.
+-}
 nextAlphabeticChar :: Char -> CountRes Char
 nextAlphabeticChar 'z' = Carry 'a'
 nextAlphabeticChar c = The . chr $ ord c + 1
@@ -86,14 +110,18 @@ nextAlphabeticNumber c =
             }
         )
 
-{- It calculates the next integer of the one contained in the CounterObj value. -}
+{- |
+It calculates the next integer of the one contained in the CounterObj value.
+-}
 nextNumeric :: CounterObj -> (Integer, CounterObj)
 nextNumeric (CounterObj n) =
     let nextOne = n + 1 in
         (nextOne, CounterObj nextOne)
 
 instance Counter CounterObj where
-    {- NB: the default implementation is a new numeric counter. -}
+    {- |
+    NB: the default implementation is a new numeric counter.
+    -}
     new = newNumeric
     cur (CounterObj n) = show n
     next c =
@@ -105,8 +133,10 @@ instance Counter AlphabeticCounterObj where
     cur = abCurrent
     next = nextAlphabeticNumber
 
-{- `next` utility returns directly a String value, but having both the Char and the Integer values which builds up the
-String value can be useful. -}
+{- |
+`next` utility returns directly a @String@ value, but having both the @Char@ and the @Integer@ values which builds up
+the @String@ value can be useful.
+-}
 nextCharAndNumber :: AlphabeticCounterObj -> (Char, Integer, AlphabeticCounterObj)
 nextCharAndNumber c =
     let (res, char, n) = nextAB c abCurrentChar abCurrentNum in

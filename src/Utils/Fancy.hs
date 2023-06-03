@@ -1,4 +1,12 @@
-{- In this module, there are definitions of functions with the aim of making the code just more fancy and idiomatic. -}
+{- |
+Module : Utils.Fancy
+Description : Sugar functions
+Copyright : (c) Luca Borghi, 2023
+License : GPL-3
+Stability : experimental
+
+In this module, there are definitions of functions with the aim of making the code just more fancy and idiomatic.
+-}
 
 module Utils.Fancy
     ( (|>)
@@ -13,32 +21,43 @@ module Utils.Fancy
 
 import Data.Maybe(fromMaybe)
 
-{- This is the same of ($) operator, but it is left-associative instead of being right-associative like ($).
+{- |
+This is the same of @($)@ operator, but it is left-associative instead of being right-associative like @($)@.
 Let's make an example to understand its usefullness, we have:
-    f x y z = x + y + z
-    ...
-    f <| 4 + 5 <| 2 + 3 - 5 <| 1
-This is useful to nest intermediate operations to pass to a function without parenthesis. -}
+
+@
+f x y z = x + y + z
+...
+f <| 4 + 5 <| 2 + 3 - 5 <| 1
+@
+
+This is useful to nest intermediate operations to pass to a function without parenthesis.
+-}
 infixl 1 <|
 (<|) :: (a -> b) -> a -> b
 (<|) f = f
 
-{- Operator useful for reverse application:
+{- |
+Operator useful for reverse application:
 
-    [1, 2, 3] |> map (* 2) |> intersperse 15 |> sum
-        =
-    sum . intersperse 15 . map (* 2) $ [1, 2, 3]
+> [1, 2, 3] |> map (* 2) |> intersperse 15 |> sum
 
+=
+
+> sum . intersperse 15 . map (* 2) $ [1, 2, 3]
 -}
 infixl 1 |>
 (|>) :: a -> (a -> b) -> b
 (|>) x f = f x
 
-{- The if-then-else construct without the if-then-else construct! Usage example:
+{- |
+The if-then-else construct without the if-then-else construct! Usage example:
 
+@
 if' (x > y)
 `then'` "Hello World!"
 `else'` "World! Hello"
+@
 
 The only limitation is that the if-condition has to be inside parenthesis.
 -}
@@ -52,21 +71,23 @@ then' False _ = id
 else' :: (a -> a) -> a -> a
 else' = ($)
 
-{- More fancy version of `fromMaybe`. Useful with `else'` operator:
+{- |
+More fancy version of `fromMaybe`. Useful with `else'` operator:
 
-    try'
-        doSomethingOn x
-    `else'`
-        takeAlternative y
-
+@
+try'
+    doSomethingOn x
+`else'`
+    takeAlternative y
+@
 -}
 try' :: Maybe a -> a -> a
 try' = flip fromMaybe
 
-{- More fancy versions of application. For example:
+{- |
+More fancy versions of application. For example:
 
-    fromFstToLast ["hello", "world", "!!!"] fetchVowels `accumulatingIn` (x, [])
-
+> fromFstToLast ["hello", "world", "!!!"] fetchVowels `accumulatingIn` (x, [])
 -}
 infixl 0 `startingFrom`
 startingFrom :: (a -> b) -> a -> b

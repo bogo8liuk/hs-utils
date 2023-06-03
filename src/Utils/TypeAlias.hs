@@ -1,20 +1,29 @@
-{- Utilities to define "typed aliases", namely a type `a` that is identical to a type `t`,
-but they are actually different at the eyes of the compiler. For example, the function `writeFile` has the following
-type:
+{- |
+Module : Utils.TypeAlias
+Description : Typed aliases
+Copyright : (c) Luca Borghi, 2023
+License : GPL-3
+Stability : experimental
 
-  writeFile :: FilePath -> String -> IO ()
+Utilities to define "typed aliases", namely a type @a@ that is identical to a type @t@,
+but they are actually different at the eyes of the compiler. This is useful, for example, for the function @writeFile@
+that has the following type:
 
-where `FilePath` is defined as:
+> writeFile :: FilePath -> String -> IO ()
 
-  type FilePath = String
+where @FilePath@ is defined as:
 
-`FilePath` is an alias to `String`, so we can accidentally flip the arguments and for the compiler everything will be ok!
-This is very dangerous! But we can use the `Typing` type and make a definition of `FilePath` like the following:
+> type FilePath = String
 
-  data FilePath_
-  type FilePath = FilePath_ `Typing` String
+@FilePath@ is an alias of @String@, so we can accidentally flip the arguments and for the compiler everything will be ok!
+This is very dangerous! But we can use the @Typing@ type and make a definition of @FilePath@ like the following:
 
-Now, if we try to flip the arguments of `writeFile`, the compiler will raise an error.
+@
+data FilePath_
+type FilePath = FilePath_ `Typing` String
+@
+
+Now, if we try to flip the arguments of @writeFile@, the compiler will raise an error.
 -}
 
 {-# LANGUAGE TypeOperators #-}
@@ -26,7 +35,9 @@ module Utils.TypeAlias
 
 import Control.Monad.Fix
 
-{- Typing type `t` with `a` instead of aliasing `a` as `t`. -}
+{- |
+Typing type @t@ with @a@ instead of aliasing @a@ as @t@.
+-}
 newtype Typing a t = Typing { unTyping :: t }
 
 instance Eq t => Eq (a `Typing` t) where
