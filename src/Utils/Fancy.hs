@@ -5,7 +5,7 @@ Copyright : (c) Luca Borghi, 2023
 License : GPL-3
 Stability : experimental
 
-In this module, there are definitions of functions with the aim of making the code just more fancy and idiomatic.
+Definitions of utilities with the aim of making the code just more fancy and idiomatic.
 -}
 
 module Utils.Fancy
