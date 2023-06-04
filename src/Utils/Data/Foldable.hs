@@ -1,3 +1,13 @@
+{- |
+Module : Utils.Data.Foldable
+Description : Utilities on foldables and lists
+Copyright : (c) Luca Borghi, 2023
+License : GPL-3
+Stability : experimental
+
+Set of utilities on @Foldable@ and @List@-like data types.
+-}
+
 module Utils.Data.Foldable
     ( insertAt
     , replaceAt
@@ -5,7 +15,7 @@ module Utils.Data.Foldable
     , diff
     , diffDrop
     , diffDropTail
-    , getIfAll
+    , maybeSequence
     , allEq
     , occursAtLeastNTimes
     , head'
@@ -15,19 +25,19 @@ module Utils.Data.Foldable
     , heads
     , headsAndLast
     , elemAt
-    , imap
-    , lastmap
-    , fltmap
-    , splitmap
-    , firstThat
-    , lastThat
-    , foldne
-    , isSublist
-    , maybemap
-    , leftmapFst
-    , rightmapFst
+    -- * map functions
+    , ixMap
+    , lastSpecialMap
+    , filterMap
+    , splitMap
+    , maybeMap
+    , rightMap
     , thatmapFst
     , thismapFst
+    --
+    , isSublist
+    , firstThat
+    , lastThat
     , newNEFst
     , newNELast
     , maximumBy'
@@ -43,18 +53,18 @@ module Utils.Data.Foldable
     , fromLastToFst
     , takeWhile'
     , indexing
+    -- * functions on tuples
     , onFst
     , onSnd
 ) where
 
 import Data.List(maximumBy, minimumBy, foldl', find)
 import Data.List.NonEmpty(NonEmpty(..))
-import Data.Maybe(isNothing)
-import Data.Either(isRight, isLeft)
 import Data.Foldable(toList)
 
 import Utils.Fancy
 import Utils.Data.Knowledge
+import Data.Semigroup (Last, getLast)
 
 ----------------------- Operations on lists and foldables -----------------------
 
@@ -92,19 +102,18 @@ diffDrop l = drop $ length l
 diffDropTail :: [a] -> [b] -> [b]
 diffDropTail l = reverse . drop (length l) . reverse
 
-{- Given a Foldable of Maybe, it returns a Maybe of Foldable of elements which were contained in the previous
-Foldable: Nothing if at least one was Nothing, Just a Foldable otherwise (namely all elements were Just something). -}
-getIfAll :: (Foldable t, Functor t) => t (Maybe a) -> Maybe (t a)
-getIfAll = maybemap id
+{- |
+Specialization of @sequenceA@ with @Maybe@ value.
+-}
+maybeSequence :: Traversable t => t (Maybe a) -> Maybe (t a)
+maybeSequence = sequenceA
 
 allEq :: Eq a => [a] -> Bool
 allEq [] = True
 allEq (h : t) = all (== h) t
 
 occursAtLeastNTimes :: Eq a => a -> [a] -> Int -> Bool
-occursAtLeastNTimes _ [] n
-    | n <= 0 = True
-    | otherwise = False
+occursAtLeastNTimes _ [] n = n <= 0
 occursAtLeastNTimes x (h : t) n
     | n <= 0 = True
     | x == h = occursAtLeastNTimes x t $ n - 1
@@ -147,37 +156,59 @@ elemAt _ [] = Nothing
 elemAt 0 (h : _) = Just h
 elemAt n (_ : t) = elemAt (n - 1) t
 
-{- Indexed version of map. -}
-imap :: (Int -> a -> b) -> [a] -> [b]
-imap f l = map <| uncurry f <| zip [0..] l
+{- |
+Indexing version of @map@.
+-}
+ixMap :: (Int -> a -> b) -> [a] -> [b]
+ixMap f l = ixMap' l 0
+    where
+        ixMap' [] _ = []
+        ixMap' (h : t) n = f n h : ixMap' t (n + 1)
 
-{- The same of map, but with a dedicated callback for the last element of the list. -}
-lastmap :: (a -> b) -> (a -> b) -> [a] -> [b]
-lastmap _ _ [] = []
-lastmap _ flast [e] = [flast e]
-lastmap f flast (e : t) = f e : lastmap f flast t
+{- |
+The same of @map@, but with a dedicated callback for the last element of the list. Using @Last@ data type in order to
+type the callback for the last element since it has the same type of function applied to the other elements of the list.
+-}
+lastSpecialMap :: (a -> b) -> Last (a -> b) -> [a] -> [b]
+lastSpecialMap _ _ [] = []
+lastSpecialMap _ flast [e] = [getLast flast e]
+lastSpecialMap f flast (e : t) = f e : lastSpecialMap f flast t
 
-{- A filtered version of map: only just some elements get mapped. -}
-fltmap :: (a -> Maybe b) -> [a] -> [b]
-fltmap _ [] = []
-fltmap f (e : t) =
-    case f e of
-        Nothing -> fltmap f t
-        Just e' -> e' : fltmap f t
+{- |
+A filtering version of @map@: only elements which map to @Just@ values are returned.
+NB: the elements are visited from the last to the first.
+-}
+filterMap :: (a -> Maybe b) -> [a] -> [b]
+filterMap f = foldr tryToAdd []
+{- An alternative implementation could be using the first component of the result of `splitMap`, but doing like that
+would allocate useless thunks (???) -}
+    where
+        tryToAdd x accum =
+            case f x of
+                Nothing -> accum
+                Just y -> y : accum
 
-splitmap :: (a -> Maybe b) -> [a] -> ([b], [a])
-{- NB: the elements are visited from the last to the first. -}
-splitmap f = foldr f' ([], [])
+{- |
+Splitting version of @map@: elements which don't map to @Just@ values are returned as they are.
+NB: the elements are visited from the last to the first.
+-}
+splitMap :: (a -> Maybe b) -> [a] -> ([b], [a])
+splitMap f = foldr f' ([], [])
     where
         f' x (incl, notIncl) =
             case f x of
                 Nothing -> (incl, x : notIncl)
-                Just x' -> (x' : incl, notIncl)
+                Just y -> (y : incl, notIncl)
 
-{- Alias for `find`. -}
+{- |
+Alias for `find`.
+-}
 firstThat :: Foldable t => (a -> Bool) -> t a -> Maybe a
 firstThat = find
 
+{- |
+Same of `firstThat`, but starting from the bottom.
+-}
 lastThat :: Foldable t => (a -> Bool) -> t a -> Maybe a
 lastThat f l =
     fromLastToFst l findIt `startingFrom` Nothing
@@ -188,36 +219,20 @@ lastThat f l =
             then Just x
             else Nothing
 
-{- Total version of foldl1'. -}
-foldne :: (a -> a -> a) -> [a] -> Maybe a
-foldne _ [] = Nothing
-foldne f l = Just $ foldl1 f l
-
-{- It tests that all elements of the first list have at least one of the second list with which the equality
-test returns true. -}
+{- |
+It tests that all elements of the first list have at least one equal element in the second list.
+-}
 isSublist :: Eq a => [a] -> [a] -> Bool
 isSublist l l' = all (`elem` l') l
 
-maybemap :: (Foldable t, Functor t) => (a -> Maybe b) -> t a -> Maybe (t b)
-maybemap f x =
-    let y = fmap f x in
-        if any isNothing y
-        then Nothing
-        else Just $ fmap (\(Just e) -> e) y
+{- |
+Specialization of @traverse@ with @Maybe@ values.
+-}
+maybeMap :: Traversable t => (a -> Maybe b) -> t a -> Maybe (t b)
+maybeMap = traverse
 
-leftmapFst :: (Foldable t, Functor t) => (a -> Either b err) -> t a -> Either (t b) err
-leftmapFst f x =
-    let y = fmap f x in
-        case firstThat isRight $ toList y of
-            Just (Right err) -> Right err
-            _ -> Left $ fmap (\(Left e) -> e) y
-
-rightmapFst :: (Foldable t, Functor t) => (a -> Either err b) -> t a -> Either err (t b)
-rightmapFst f x =
-    let y = fmap f x in
-        case firstThat isLeft $ toList y of
-            Just (Left err) -> Left err
-            _ -> Right $ fmap (\(Right e) -> e) y
+rightMap :: Traversable t => (a -> Either c b) -> t a -> Either c (t b)
+rightMap = traverse
 
 thatmapFst :: (Foldable t, Functor t) => (a -> KnowledgeOneOf err b) -> t a -> KnowledgeOneOf err (t b)
 thatmapFst f x =
