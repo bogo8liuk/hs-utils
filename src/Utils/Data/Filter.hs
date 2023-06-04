@@ -1,8 +1,26 @@
+{- |
+Module : Utils.Fancy
+Description : Filter data type
+Copyright : (c) Luca Borghi, 2023
+License : GPL-3
+Stability : experimental
+
+Interface for filter data type.
+-}
+
 module Utils.Data.Filter
-    ( Filter(..)
-    , isIncludedBy
-    , isNotIncludedBy
+    (
+    -- * Membership interface
+      Membership(..)
+    -- * Filter data type
+    , Filter(..)
 ) where
+
+class Membership t e where
+    isMember :: e -> t -> Bool
+    isNotMember :: e -> t -> Bool
+
+    isNotMember e t = not (e `isMember` t)
 
 data Filter e
     = AllElements
@@ -16,11 +34,8 @@ instance Functor Filter where
     fmap f (SomeElements xs) = SomeElements $ fmap f xs
     fmap f (ExceptElements xs) = ExceptElements $ fmap f xs
 
-isIncludedBy :: Eq e => e -> Filter e -> Bool
-isIncludedBy _ AllElements = True
-isIncludedBy _ NoElements = False
-isIncludedBy x (SomeElements xs) = x `elem` xs
-isIncludedBy x (ExceptElements xs) = x `notElem` xs
-
-isNotIncludedBy :: Eq e => e -> Filter e -> Bool
-isNotIncludedBy x filt = not (x `isIncludedBy` filt)
+instance Eq e => Membership (Filter e) e where
+    isMember _ AllElements = True
+    isMember _ NoElements = False
+    isMember x (SomeElements xs) = x `elem` xs
+    isMember x (ExceptElements xs) = x `notElem` xs
