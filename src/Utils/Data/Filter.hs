@@ -1,5 +1,5 @@
 {- |
-Module : Utils.Fancy
+Module : Utils.Data.Filter
 Description : Filter data type
 Copyright : (c) Luca Borghi, 2023
 License : GPL-3

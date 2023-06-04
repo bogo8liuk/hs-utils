@@ -1,5 +1,5 @@
 {- |
-Module : Utils.Fancy
+Module : Utils.Data.Counter
 Description : Counter data type
 Copyright : (c) Luca Borghi, 2023
 License : GPL-3
