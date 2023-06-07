@@ -42,7 +42,7 @@ Operator useful for reverse application:
 
 > [1, 2, 3] |> map (* 2) |> intersperse 15 |> sum
 
-=
+is semantically equal to
 
 > sum . intersperse 15 . map (* 2) $ [1, 2, 3]
 -}
@@ -72,7 +72,7 @@ else' :: (a -> a) -> a -> a
 else' = ($)
 
 {- |
-More fancy version of `fromMaybe`. Useful with `else'` operator:
+More fancy version of @fromMaybe@:
 
 @
 try'

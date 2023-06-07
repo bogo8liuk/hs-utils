@@ -79,7 +79,7 @@ fromFstToLastM t f x = foldM f x t
 {- |
 > fromLastToFstM [x1, x2, x3] f a
 
-=
+is semantically equal to
 
 @
 do
@@ -100,6 +100,8 @@ A way to concatenate a list of operations with Monad bind. Useful to decrease th
 chain of similar operations. For instance:
 
 > f x = x >>* [g, h, g, m, h]
+
+is semantically equal to
 
 @
 f x = do
@@ -127,6 +129,7 @@ tryFromFst (op : ops) =
 
 {- |
 Same of `tryFromFst`, but it doesn't require the actions to be a @MonadPlus@ instance.
+
 NB: it doesn't cancel the effects occurred when performing failing actions.
 -}
 tryFromFst' :: MonadError err m => NonEmpty (m a) -> m a
