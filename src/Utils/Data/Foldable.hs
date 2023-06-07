@@ -9,98 +9,124 @@ Set of utilities on @Foldable@ and @List@-like data types.
 -}
 
 module Utils.Data.Foldable
-    ( insertAt
+    (
+    -- * Functions on lists
+      elemAt
+    , insertAt
     , replaceAt
     , replaceAndGetAt
     , diff
     , diffDrop
     , diffDropTail
-    , maybeSequence
     , allEq
-    , occursAtLeastNTimes
+    , occurs
     , head'
     , tail'
-    , tail''
+    , tailEmptyMin
     , last'
-    , heads
-    , headsAndLast
-    , elemAt
-    -- * map functions
+    , discardLast
+    , splitLast
+    , isSublist
+    , theMost
+    , greatest
+    , lowest
+    , takeWhile'
+    , indexing
+    -- ** Functions on non-empty lists
+    , newNonEmpty
+    , newNonEmpty'
+    , theMost'
+    , greatest'
+    , lowest'
+    -- * Mapping functions
     , ixMap
     , lastSpecialMap
     , filterMap
     , splitMap
     , maybeMap
-    , rightMap
-    , thatmapFst
-    , thismapFst
-    --
-    , isSublist
+    , eitherMap
+    , knowMap
+    , knowOneMap
+    -- * Functions on foldables
     , firstThat
     , lastThat
-    , newNEFst
-    , newNELast
     , maximumBy'
     , minimumBy'
-    , theMost
-    , greatest
-    , lowest
-    , theMost'
-    , greatest'
-    , lowest'
-    , forAll
     , fromFstToLast
     , fromLastToFst
-    , takeWhile'
-    , indexing
     -- * functions on tuples
     , onFst
     , onSnd
+    -- * Other utilities
+    , maybeSequence
 ) where
 
-import Data.List(maximumBy, minimumBy, foldl', find)
-import Data.List.NonEmpty(NonEmpty(..))
-import Data.Foldable(toList)
-
+import Data.List (maximumBy, minimumBy, foldl', find)
+import Data.List.NonEmpty (NonEmpty(..))
 import Utils.Fancy
 import Utils.Data.Knowledge
 import Data.Semigroup (Last, getLast)
 
------------------------ Operations on lists and foldables -----------------------
-
+{- |
+It inserts an element in a list at a given index. If the index is out of the list bounds, it does not insert the
+element.
+-}
 insertAt :: Int -> a -> [a] -> [a]
 insertAt 0 x [] = [x]
 insertAt _ _ [] = []
 insertAt n x l@(h : t)
-    | n <= 0 = x : h : l
+    | n == 0 = x : h : l
     | otherwise = h : insertAt (n - 1) x t
 
-{- It replace an element at a given position (negative numbers are treated as zero). Complexity: O(pos), where pos is
-the position where to replacing is performed, with 0 <= pos <= length l. -}
+{- |
+It replaces an element at a given position (negative numbers are treated as zero).
+
+Complexity: /O(pos)/, where /pos/ is the position where to replacing is performed, with /0 <= pos <= length l/.
+-}
 replaceAt :: Int -> a -> [a] -> [a]
 replaceAt _ _ [] = []
 replaceAt n x l@(h : t)
     | n <= 0 = x : l
     | otherwise = h : replaceAt (n - 1) x t
 
-{- Same of `replaceAt`, but it returns also the eventually removed element. NB: It is less efficient than `replaceAt`,
-complexity: O(2 * pos). -}
+{- |
+Same of `replaceAt`, but it returns also the eventually removed element.
+
+__NB__: It is less efficient than `replaceAt`.
+
+Complexity: /O(2 * pos)/.
+-}
 replaceAndGetAt :: Int -> a -> [a] -> (Maybe a, [a])
 replaceAndGetAt n x l =
     case splitAt n l of
         (l1, []) -> (Nothing, l1)
         (l1, h : t) -> (Just h, l1 ++ x : t)
 
+{- |
+It removes all the elements of the first list which stand also in the second list.
+
+> "Hello!" `diff` "!o" == "Hell"
+-}
 diff :: Eq a => [a] -> [a] -> [a]
 diff l1 l2 = filter (`elem` l2) l1
 
-{- From the second list, it removes (from the head) the number of elements of the first list. -}
-diffDrop :: [a] -> [b] -> [b]
-diffDrop l = drop $ length l
+{- |
+From the first list, it removes (from the head) the number of elements of the second list.
+-}
+diffDrop :: [a] -> [b] -> [a]
+diffDrop [] _ = []
+diffDrop l1 [] = l1
+diffDrop (_ : t1) (_ : t2) = diffDrop t1 t2
 
-{- Same as diffList but it removes starting from the tail. -}
-diffDropTail :: [a] -> [b] -> [b]
-diffDropTail l = reverse . drop (length l) . reverse
+{- |
+Same as `diffDrop` but it removes starting from the tail.
+-}
+diffDropTail :: [a] -> [b] -> [a]
+diffDropTail l1 l2 = fst $ foldr dropThenAccum ([], l2) l1
+    where
+        -- | While the second component has elements, don't accumulate. Whenever it becomes empty, start accumulating.
+        dropThenAccum x (accum, []) = (x : accum, [])
+        dropThenAccum _ (accum, _ : t) = (accum, t)
 
 {- |
 Specialization of @sequenceA@ with @Maybe@ value.
@@ -112,12 +138,15 @@ allEq :: Eq a => [a] -> Bool
 allEq [] = True
 allEq (h : t) = all (== h) t
 
-occursAtLeastNTimes :: Eq a => a -> [a] -> Int -> Bool
-occursAtLeastNTimes _ [] n = n <= 0
-occursAtLeastNTimes x (h : t) n
+{- |
+It tells if an element occurs at least a given number of times in a list.
+-}
+occurs :: Eq a => Int -> a -> [a] -> Bool
+occurs n _ [] = n <= 0
+occurs n x (h : t)
     | n <= 0 = True
-    | x == h = occursAtLeastNTimes x t $ n - 1
-    | otherwise = occursAtLeastNTimes x t n
+    | x == h = occurs (n - 1) x t
+    | otherwise = occurs n x t
 
 head' :: [a] -> Maybe a
 head' [] = Nothing
@@ -127,30 +156,40 @@ tail' :: [a] -> Maybe [a]
 tail' [] = Nothing
 tail' (_ : t) = Just t
 
-{- Like tail, but if the list is empty, it returns the empty list. -}
-tail'' :: [a] -> [a]
-tail'' [] = []
-tail'' (_ : t) = t
+{- |
+Like @tail@, but if the list is empty, it returns the empty list.
+-}
+tailEmptyMin :: [a] -> [a]
+tailEmptyMin [] = []
+tailEmptyMin (_ : t) = t
 
 last' :: [a] -> Maybe a
 last' l = head' $ reverse l
 
-heads :: [a] -> Maybe [a]
-heads [] = Nothing
-heads l = Just $ heads' l
+{- |
+If the list is not empty, it returns the list without the last element, else it returns @Nothing@.
+-}
+discardLast :: [a] -> Maybe [a]
+discardLast [] = Nothing
+discardLast l = Just $ heads l
     where
-        {- Using this function in order not to unwrap and wrap results. -}
-        heads' [] = []    --This case should never be evaluated
-        heads' [_] = []
-        heads' (e : t) = e : heads' t
+        heads [] = []    -- ^ This case should never be evaluated
+        heads [_] = []
+        heads (e : t) = e : heads t
 
-headsAndLast :: [a] -> Maybe ([a], a)
-headsAndLast l = headsAndLast' l []
+{- |
+Same of `discardLast`, but it returns the last element separately, instead of discarding it.
+-}
+splitLast :: [a] -> Maybe ([a], a)
+splitLast l = headsAndLast' l []
     where
         headsAndLast' [] _ = Nothing
         headsAndLast' [e] accum = Just (reverse accum, e)
         headsAndLast' (e : t) accum = headsAndLast' t $ e : accum
 
+{- |
+It takes the n-th element of the list. If the index is out of the bounds of the list, it returns @Nothing@.
+-}
 elemAt :: Int -> [a] -> Maybe a
 elemAt _ [] = Nothing
 elemAt 0 (h : _) = Just h
@@ -176,6 +215,7 @@ lastSpecialMap f flast (e : t) = f e : lastSpecialMap f flast t
 
 {- |
 A filtering version of @map@: only elements which map to @Just@ values are returned.
+
 NB: the elements are visited from the last to the first.
 -}
 filterMap :: (a -> Maybe b) -> [a] -> [b]
@@ -201,13 +241,13 @@ splitMap f = foldr f' ([], [])
                 Just y -> (y : incl, notIncl)
 
 {- |
-Alias for `find`.
+Alias for @find@.
 -}
 firstThat :: Foldable t => (a -> Bool) -> t a -> Maybe a
 firstThat = find
 
 {- |
-Same of `firstThat`, but starting from the bottom.
+It takes the last element which respects the predicate. The implementation does not test all elements.
 -}
 lastThat :: Foldable t => (a -> Bool) -> t a -> Maybe a
 lastThat f l =
@@ -231,44 +271,57 @@ Specialization of @traverse@ with @Maybe@ values.
 maybeMap :: Traversable t => (a -> Maybe b) -> t a -> Maybe (t b)
 maybeMap = traverse
 
-rightMap :: Traversable t => (a -> Either c b) -> t a -> Either c (t b)
-rightMap = traverse
+{- |
+Specialization of @traverse@ with @Either@ values.
+-}
+eitherMap :: Traversable t => (a -> Either c b) -> t a -> Either c (t b)
+eitherMap = traverse
 
-thatmapFst :: (Foldable t, Functor t) => (a -> KnowledgeOneOf err b) -> t a -> KnowledgeOneOf err (t b)
-thatmapFst f x =
-    let y = fmap f x in
-        case firstThat (not . isThat) $ toList y of
-            Just None -> None
-            Just (This err) -> This err
-            _ -> That $ fmap (\(That e) -> e) y
+{- |
+Specialization of @traverse@ with @KnowledgeOf@ values.
+-}
+knowMap :: Traversable t => (a -> KnowledgeOf b) -> t a -> KnowledgeOf (t b)
+knowMap = traverse
 
-thismapFst :: (Foldable t, Functor t) => (a -> KnowledgeOneOf b err) -> t a -> KnowledgeOneOf (t b) err
-thismapFst f x =
-    let y = fmap f x in
-        case firstThat (not . isThis) $ toList y of
-            Just None -> None
-            Just (That err) -> That err
-            _ -> This $ fmap (\(This e) -> e) y
+{- |
+Specialization of @traverse@ with @KnowledgeOneOf@ values.
+-}
+knowOneMap :: Traversable t => (a -> KnowledgeOneOf c b) -> t a -> KnowledgeOneOf c (t b)
+knowOneMap = traverse
 
-newNEFst :: a -> [a] -> NonEmpty a
-newNEFst = (:|)
+{- |
+Alias for @(:|)@.
+-}
+newNonEmpty :: a -> [a] -> NonEmpty a
+newNonEmpty = (:|)
+{-# INLINE newNonEmpty #-}
 
-newNELast :: [a] -> a -> NonEmpty a
-newNELast [] e' = e' :| []
-newNELast (e : t) e' = e :| t ++ [e']
+newNonEmpty' :: [a] -> a -> NonEmpty a
+newNonEmpty' [] e' = e' :| []
+newNonEmpty' (e : t) e' = e :| t ++ [e']
 
-{- Total version of maximumBy. -}
+{- |
+Total version of @maximumBy@.
+-}
 maximumBy' :: Foldable t => (a -> a -> Ordering) -> t a -> Maybe a
 maximumBy' ord x
     | null x = Nothing
     | otherwise = Just $ maximumBy ord x
 
-{- Total version of minimumBy. -}
+{- |
+Total version of minimumBy.
+-}
 minimumBy' :: Foldable t => (a -> a -> Ordering) -> t a -> Maybe a
 minimumBy' ord x
     | null x = Nothing
     | otherwise = Just $ minimumBy ord x
 
+{- |
+It finds the element of the list which, applied to the predicate, one by one with all other elements of the list,
+returns @True@. It is particularly useful for predicates which respect transitivity.
+
+> theMost (>) [1, 42, 7, 3] == 42
+-}
 theMost :: (a -> a -> Bool) -> [a] -> Maybe a
 theMost _ [] = Nothing
 theMost p (h : t) = Just $ theMost' p (h :| t)
@@ -292,28 +345,25 @@ greatest' = theMost' (>)
 lowest' :: Ord a => NonEmpty a -> a
 lowest' = theMost' (<)
 
-{- A more fancy version of foldl':
+{- |
+A more fancy version of @foldl\'@:
 
-    forAll ["hello", "world", "42"] deleteKeyFrom strTable
--}
-forAll :: Foldable t => t a -> (b -> a -> b) -> b -> b
-forAll obj f start = foldl' f start obj
-
-{- A more fancy version of foldl':
-
-    fromFstToLast ["hello", "world", "42"] deleteKeyFrom strTable
+> fromFstToLast ["hello", "world", "42"] deleteKeyFrom strTable
 -}
 fromFstToLast :: Foldable t => t a -> (b -> a -> b) -> b -> b
 fromFstToLast x f start = foldl' f start x
 
-{- A more fancy version of foldr:
+{- |
+A more fancy version of @foldr@:
 
-    fromLastToFst ["hello", "world", "42"] deleteKeyFrom strTable
+> fromLastToFst ["hello", "world", "42"] deleteKeyFrom strTable
 -}
 fromLastToFst :: Foldable t => t a -> (a -> b -> b) -> b -> b
 fromLastToFst x f start = foldr f start x
 
-{- Same of takeWhile, but it includes also the element that satisfy the predicate. -}
+{- |
+Same of @takeWhile@, but it includes also the element that satisfy the predicate.
+-}
 takeWhile' :: (a -> Bool) -> [a] -> [a]
 takeWhile' _ [] = []
 takeWhile' f (x : t) =
@@ -323,8 +373,6 @@ takeWhile' f (x : t) =
 
 indexing :: [a] -> [(Int, a)]
 indexing = zip [0..]
-
------------------------ Operations on tuples -----------------------
 
 onFst :: (a -> c) -> (a, b) -> (c, b)
 onFst f (x, y) = (f x, y)
