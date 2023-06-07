@@ -8,6 +8,8 @@ Stability : experimental
 Typed aliases based @Text@ data type.
 -}
 
+{-# LANGUAGE TypeOperators #-}
+
 module Utils.Data.Text.TypeAlias
     (
     -- * Aliases

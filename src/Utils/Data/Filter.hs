@@ -8,6 +8,9 @@ Stability : experimental
 Interface for filter data type.
 -}
 
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module Utils.Data.Filter
     (
     -- * Membership interface
